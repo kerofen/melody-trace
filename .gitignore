@@ -1,0 +1,37 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+
+# Environment
+.env
+.env.local
+
+# IDE
+.vscode/
+.idea/
+.cursor/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Capacitor platform build artifacts
+android/app/build/
+android/.gradle/
+android/app/.cxx/
+ios/App/Pods/
+ios/App/build/
+ios/App/output/
+
+# Python
+__pycache__/
+*.pyc
+.mypy_cache/
+
+# Logs
+*.log
+npm-debug.log*

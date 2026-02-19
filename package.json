@@ -1,0 +1,27 @@
+{
+  "name": "melody-trace",
+  "version": "1.0.0",
+  "description": "音階パズルゲーム - 一筆書きでメロディを奏でよう",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "cap:sync": "npx cap sync",
+    "build:mobile": "vite build && npx cap sync",
+    "build:android": "vite build && npx cap sync android",
+    "build:ios": "vite build && npx cap sync ios"
+  },
+  "dependencies": {
+    "@capacitor-community/admob": "^6.2.0",
+    "@capacitor/core": "^6.2.1",
+    "@capacitor/haptics": "^6.0.3",
+    "@capacitor/splash-screen": "^6.0.4",
+    "@capacitor/status-bar": "^6.0.3",
+    "phaser": "^3.80.1"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^6.2.1",
+    "vite": "^5.4.0"
+  }
+}
