@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_W, GAME_H, NOTE_COLORS, NOTE_NAMES, INSTRUMENTS, MENU_COLORS, getAudioPath } from '../config.js';
+import { GAME_W, GAME_H, SAFE, NOTE_COLORS, NOTE_NAMES, INSTRUMENTS, MENU_COLORS, getAudioPath } from '../config.js';
 import GameData from '../managers/GameData.js';
 import SoundManager from '../managers/SoundManager.js';
 import { encodeStage, decodeStage } from '../managers/ShareCode.js';
@@ -111,25 +111,24 @@ export default class StageEditorScene extends Phaser.Scene {
     }
 
     createTopBar() {
-        const backBtn = this.add.container(65, 50);
+        const backBtn = this.add.container(30, SAFE.TOP + 30);
         const backBg = this.add.graphics();
-        backBg.fillStyle(MENU_COLORS.back, 1);
-        backBg.fillRoundedRect(-55, -18, 110, 36, 10);
+        backBg.fillStyle(0x000000, 0.3);
+        backBg.fillRoundedRect(-18, -18, 36, 36, 10);
         backBtn.add(backBg);
-        const backLabel = this.add.text(0, 0, '← もどる', {
+        const backArrow = this.add.text(0, 0, '←', {
             fontFamily: 'KeiFont, sans-serif',
-            fontSize: '16px',
-            color: '#FFFFFF',
+            fontSize: '22px',
+            color: '#ffffff',
         }).setOrigin(0.5);
-        backBtn.add(backLabel);
-        backBtn.setSize(110, 36).setInteractive({ useHandCursor: true });
-        backBtn.on('pointerdown', () => this.tweens.add({ targets: backBtn, scale: 0.95, duration: 50 }));
-        backBtn.on('pointerup', () => {
-            this.tweens.add({ targets: backBtn, scale: 1.0, duration: 100 });
+        backBtn.add(backArrow);
+        backBtn.setSize(36, 36).setInteractive({ useHandCursor: true });
+        backBtn.on('pointerdown', () => {
             SoundManager.playBackSE();
             SoundManager.triggerHaptic(8);
             this.goBack();
         });
+        backBtn.on('pointerover', () => this.tweens.add({ targets: backBtn, scale: 1.1, duration: 100 }));
         backBtn.on('pointerout', () => this.tweens.add({ targets: backBtn, scale: 1.0, duration: 100 }));
 
         const playBtn = this.add.container(GAME_W - 65, 50);

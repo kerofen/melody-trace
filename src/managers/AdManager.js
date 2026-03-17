@@ -3,16 +3,19 @@
  * Web開発時はモック広告、Capacitorビルド時はAdMobインタースティシャルを表示
  */
 import GameData from './GameData.js';
+import IAPManager from './IAPManager.js';
 
 const isNative = () =>
     typeof window !== 'undefined' && window.Capacitor?.isNativePlatform();
 
+const IS_TESTING = import.meta.env.VITE_ADMOB_TESTING === 'true';
+
 const AD_UNIT_IDS = {
     ios: {
-        interstitial: 'ca-app-pub-xxxxxxxxxxxxx/yyyyyyyyyy', // TODO: 本番広告ユニットIDに差し替え
+        interstitial: import.meta.env.VITE_ADMOB_INTERSTITIAL_ID_IOS || 'ca-app-pub-3940256099942544/4411468910',
     },
     android: {
-        interstitial: 'ca-app-pub-xxxxxxxxxxxxx/zzzzzzzzzz', // TODO: 本番広告ユニットIDに差し替え
+        interstitial: import.meta.env.VITE_ADMOB_INTERSTITIAL_ID_ANDROID || 'ca-app-pub-3940256099942544/1033173712',
     },
     test: {
         interstitial: 'ca-app-pub-3940256099942544/1033173712',
@@ -20,7 +23,7 @@ const AD_UNIT_IDS = {
 };
 
 function getPlatformIds() {
-    if (!isNative()) return AD_UNIT_IDS.test;
+    if (!isNative() || IS_TESTING) return AD_UNIT_IDS.test;
     const platform = window.Capacitor.getPlatform();
     return AD_UNIT_IDS[platform] || AD_UNIT_IDS.test;
 }
@@ -38,8 +41,12 @@ export default class AdManager {
         try {
             const { AdMob } = await import('@capacitor-community/admob');
 
+            if (window.Capacitor.getPlatform() === 'ios') {
+                await AdMob.requestTrackingAuthorization();
+            }
+
             await AdMob.initialize({
-                initializeForTesting: true, // TODO: リリース時に false に変更
+                initializeForTesting: IS_TESTING,
             });
 
             AdMob.addListener('onInterstitialAdLoaded', () => {
@@ -62,7 +69,7 @@ export default class AdManager {
             const ids = getPlatformIds();
             await AdMob.prepareInterstitial({
                 adId: ids.interstitial,
-                isTesting: true, // TODO: リリース時に false に変更
+                isTesting: IS_TESTING,
             });
         } catch (e) {
             console.warn('Interstitial prepare failed:', e);
@@ -70,7 +77,7 @@ export default class AdManager {
     }
 
     static shouldShowAd() {
-        if (GameData.isPurchased('adFree')) return false;
+        if (IAPManager.isAdRemovalPurchased()) return false;
         const stats = GameData.getStats();
         if (stats.totalClears < 3) return false;
         const adState = GameData.getAdState();

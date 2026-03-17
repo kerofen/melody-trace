@@ -22,3 +22,5 @@ const config = {
 };
 
 const game = new Phaser.Game(config);
+
+screen.orientation?.lock('portrait').catch(() => {});

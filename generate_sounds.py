@@ -180,7 +180,7 @@ INSTRUMENT_BASE_NOTES = {
 # 出力設定
 # ============================================================
 
-OUTPUT_BASE = "assets/se"
+OUTPUT_BASE = "public/assets/se"
 SAMPLE_RATE = 44100
 
 

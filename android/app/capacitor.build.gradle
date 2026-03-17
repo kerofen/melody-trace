@@ -2,18 +2,19 @@
 
 android {
   compileOptions {
-      sourceCompatibility JavaVersion.VERSION_17
-      targetCompatibility JavaVersion.VERSION_17
+      sourceCompatibility JavaVersion.VERSION_21
+      targetCompatibility JavaVersion.VERSION_21
   }
 }
 
 apply from: "../capacitor-cordova-android-plugins/cordova.variables.gradle"
 dependencies {
     implementation project(':capacitor-community-admob')
+    implementation project(':capacitor-community-firebase-analytics')
     implementation project(':capacitor-haptics')
     implementation project(':capacitor-splash-screen')
     implementation project(':capacitor-status-bar')
-
+    implementation "com.android.billingclient:billing:8.3.0"
 }
 
 

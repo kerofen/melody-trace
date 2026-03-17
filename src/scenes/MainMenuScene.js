@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import { GAME_W, GAME_H, TEXT_STYLE, NOTE_COLORS, MENU_COLORS } from '../config.js';
+import { GAME_W, GAME_H, TEXT_STYLE, NOTE_COLORS, MENU_COLORS, PRIVACY_POLICY_URL } from '../config.js';
 import GameData from '../managers/GameData.js';
+import IAPManager from '../managers/IAPManager.js';
 import SoundManager from '../managers/SoundManager.js';
 
 export default class MainMenuScene extends Phaser.Scene {
@@ -205,7 +206,7 @@ export default class MainMenuScene extends Phaser.Scene {
         this.settingsElements.push(overlay);
 
         const panelW = 320;
-        const panelH = 340;
+        const panelH = 520;
         const panelX = GAME_W / 2;
         const panelY = GAME_H / 2;
 
@@ -231,15 +232,32 @@ export default class MainMenuScene extends Phaser.Scene {
 
         const settings = GameData.getSettings();
         const toggles = [
-            { key: 'bgmEnabled', label: 'BGM', y: -55 },
-            { key: 'seEnabled', label: '効果音', y: 15 },
-            { key: 'hapticEnabled', label: '振動', y: 85 },
+            { key: 'bgmEnabled', label: 'BGM', y: -145 },
+            { key: 'seEnabled', label: '効果音', y: -75 },
+            { key: 'hapticEnabled', label: '振動', y: -5 },
         ];
 
         toggles.forEach(t => {
             this.createToggle(panel, t.label, t.y, settings[t.key], (val) => {
                 GameData.setSetting(t.key, val);
             });
+        });
+
+        const separator = this.add.graphics();
+        separator.lineStyle(1, 0x4d96ff, 0.3);
+        separator.lineBetween(-panelW / 2 + 30, 45, panelW / 2 - 30, 45);
+        panel.add(separator);
+
+        this.createSettingsLinkButton(panel, '購入を復元', 90, '#888888', () => {
+            this.handleRestorePurchases(panel);
+        });
+
+        this.createSettingsLinkButton(panel, 'プライバシーポリシー', 140, '#888888', () => {
+            window.open(PRIVACY_POLICY_URL, '_blank');
+        });
+
+        this.createSettingsLinkButton(panel, 'データをリセット', 190, '#ff5252', () => {
+            this.showResetConfirmation();
         });
 
         const closeBtn = this.add.text(0, panelH / 2 - 40, '閉じる', {
@@ -305,6 +323,160 @@ export default class MainMenuScene extends Phaser.Scene {
                 ease: 'Cubic.easeOut',
             });
             onChange(isOn);
+        });
+    }
+
+    createSettingsLinkButton(panel, label, y, color, callback) {
+        const btn = this.add.text(0, y, label, {
+            fontFamily: 'KeiFont, sans-serif',
+            fontSize: '18px',
+            color: color,
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        btn.on('pointerdown', () => btn.setAlpha(0.6));
+        btn.on('pointerup', () => {
+            btn.setAlpha(1);
+            SoundManager.playTapSE();
+            SoundManager.triggerHaptic(8);
+            callback(btn);
+        });
+        btn.on('pointerout', () => btn.setAlpha(1));
+
+        panel.add(btn);
+        return btn;
+    }
+
+    async handleRestorePurchases(panel) {
+        const statusText = this.add.text(0, 115, '復元中...', {
+            fontFamily: 'KeiFont, sans-serif',
+            fontSize: '14px',
+            color: '#aaaaaa',
+        }).setOrigin(0.5);
+        panel.add(statusText);
+
+        const restored = await IAPManager.restorePurchases();
+
+        if (restored) {
+            statusText.setText('復元しました！');
+            statusText.setColor('#4db866');
+        } else {
+            statusText.setText('復元する購入がありません');
+            statusText.setColor('#ff5252');
+        }
+
+        this.time.delayedCall(2500, () => {
+            if (statusText && statusText.active) statusText.destroy();
+        });
+    }
+
+    showResetConfirmation() {
+        const confirmElements = [];
+
+        const overlay = this.add.graphics();
+        overlay.fillStyle(0x000000, 0.7);
+        overlay.fillRect(0, 0, GAME_W, GAME_H);
+        overlay.setDepth(200);
+        overlay.setInteractive(
+            new Phaser.Geom.Rectangle(0, 0, GAME_W, GAME_H),
+            Phaser.Geom.Rectangle.Contains
+        );
+        confirmElements.push(overlay);
+
+        const dialogW = 280;
+        const dialogH = 180;
+        const dialog = this.add.container(GAME_W / 2, GAME_H / 2);
+        dialog.setDepth(201);
+        confirmElements.push(dialog);
+
+        const bg = this.add.graphics();
+        bg.fillStyle(0x1e2a4a, 1);
+        bg.fillRoundedRect(-dialogW / 2, -dialogH / 2, dialogW, dialogH, 16);
+        bg.lineStyle(2, 0xff5252, 0.5);
+        bg.strokeRoundedRect(-dialogW / 2, -dialogH / 2, dialogW, dialogH, 16);
+        dialog.add(bg);
+
+        const msg = this.add.text(0, -45, 'すべてのデータを\n削除しますか？', {
+            fontFamily: 'KeiFont, sans-serif',
+            fontSize: '20px',
+            color: '#FFFFFF',
+            align: 'center',
+            stroke: '#000000',
+            strokeThickness: 2,
+        }).setOrigin(0.5);
+        dialog.add(msg);
+
+        const sub = this.add.text(0, 5, 'この操作は取り消せません', {
+            fontFamily: 'KeiFont, sans-serif',
+            fontSize: '13px',
+            color: '#ff8888',
+        }).setOrigin(0.5);
+        dialog.add(sub);
+
+        const destroyConfirm = () => {
+            confirmElements.forEach(el => {
+                if (el && el.active) el.destroy();
+            });
+        };
+
+        const btnW = 110;
+        const btnH = 40;
+
+        const cancelBtn = this.add.container(-70, 55);
+        const cancelBg = this.add.graphics();
+        cancelBg.fillStyle(0x444444, 1);
+        cancelBg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 10);
+        cancelBtn.add(cancelBg);
+        const cancelLabel = this.add.text(0, 0, 'キャンセル', {
+            fontFamily: 'KeiFont, sans-serif',
+            fontSize: '16px',
+            color: '#FFFFFF',
+        }).setOrigin(0.5);
+        cancelBtn.add(cancelLabel);
+        cancelBtn.setSize(btnW, btnH).setInteractive({ useHandCursor: true });
+        cancelBtn.on('pointerdown', () => this.tweens.add({ targets: cancelBtn, scale: 0.95, duration: 50 }));
+        cancelBtn.on('pointerup', () => {
+            this.tweens.add({ targets: cancelBtn, scale: 1.0, duration: 100 });
+            SoundManager.playBackSE();
+            destroyConfirm();
+        });
+        cancelBtn.on('pointerout', () => this.tweens.add({ targets: cancelBtn, scale: 1.0, duration: 100 }));
+        dialog.add(cancelBtn);
+
+        const resetBtn = this.add.container(70, 55);
+        const resetBg = this.add.graphics();
+        resetBg.fillStyle(MENU_COLORS.danger, 1);
+        resetBg.fillRoundedRect(-btnW / 2, -btnH / 2, btnW, btnH, 10);
+        resetBtn.add(resetBg);
+        const resetLabel = this.add.text(0, 0, 'リセット', {
+            fontFamily: 'KeiFont, sans-serif',
+            fontSize: '16px',
+            color: '#FFFFFF',
+        }).setOrigin(0.5);
+        resetBtn.add(resetLabel);
+        resetBtn.setSize(btnW, btnH).setInteractive({ useHandCursor: true });
+        resetBtn.on('pointerdown', () => this.tweens.add({ targets: resetBtn, scale: 0.95, duration: 50 }));
+        resetBtn.on('pointerup', () => {
+            this.tweens.add({ targets: resetBtn, scale: 1.0, duration: 100 });
+            SoundManager.playTapSE();
+            GameData.resetAll();
+            destroyConfirm();
+            this.closeSettings();
+            this.cameras.main.fadeOut(300);
+            this.time.delayedCall(300, () => {
+                this.scene.start('BootScene');
+            });
+        });
+        resetBtn.on('pointerout', () => this.tweens.add({ targets: resetBtn, scale: 1.0, duration: 100 }));
+        dialog.add(resetBtn);
+
+        dialog.setScale(0.8);
+        dialog.setAlpha(0);
+        this.tweens.add({
+            targets: dialog,
+            scale: 1,
+            alpha: 1,
+            duration: 200,
+            ease: 'Back.easeOut',
         });
     }
 

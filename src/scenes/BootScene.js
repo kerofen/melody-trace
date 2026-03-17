@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import { GAME_W, GAME_H } from '../config.js';
 import GameData from '../managers/GameData.js';
 import AdManager from '../managers/AdManager.js';
+import AnalyticsManager from '../managers/AnalyticsManager.js';
+import IAPManager from '../managers/IAPManager.js';
 import SoundManager from '../managers/SoundManager.js';
 
 export default class BootScene extends Phaser.Scene {
@@ -47,6 +49,8 @@ export default class BootScene extends Phaser.Scene {
     create() {
         GameData.load();
         AdManager.initialize();
+        IAPManager.initialize();
+        AnalyticsManager.initialize();
         SoundManager.init();
 
         this.time.delayedCall(500, () => {

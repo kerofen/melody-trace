@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { GAME_W, GAME_H, TEXT_STYLE, NOTE_COLORS, PALETTE, INSTRUMENTS, MENU_COLORS } from '../config.js';
+import { GAME_W, GAME_H, SAFE, TEXT_STYLE, NOTE_COLORS, PALETTE, INSTRUMENTS, MENU_COLORS } from '../config.js';
 import { STAGES } from '../data/stages.js';
 import GameData from '../managers/GameData.js';
 import SoundManager from '../managers/SoundManager.js';
@@ -432,34 +432,26 @@ export default class StageSelectScene extends Phaser.Scene {
     }
 
     createBackButton() {
-        const y = GAME_H - 45;
-        const buttonW = 140;
-        const buttonH = 42;
+        const btnY = SAFE.TOP + 30;
 
-        const container = this.add.container(GAME_W / 2, y);
+        const container = this.add.container(30, btnY);
         container.setDepth(50);
 
         const bg = this.add.graphics();
-        bg.fillStyle(MENU_COLORS.back, 1);
-        bg.fillRoundedRect(-buttonW / 2, -buttonH / 2, buttonW, buttonH, 12);
+        bg.fillStyle(0x000000, 0.3);
+        bg.fillRoundedRect(-18, -18, 36, 36, 10);
         container.add(bg);
 
-        const label = this.add.text(0, 0, '← もどる', {
+        const arrow = this.add.text(0, 0, '←', {
             fontFamily: 'KeiFont, sans-serif',
-            fontSize: '18px',
-            color: '#FFFFFF',
-            stroke: '#00000055',
-            strokeThickness: 3,
+            fontSize: '22px',
+            color: '#ffffff',
         }).setOrigin(0.5);
-        container.add(label);
+        container.add(arrow);
 
-        container.setSize(buttonW, buttonH).setInteractive({ useHandCursor: true });
+        container.setSize(36, 36).setInteractive({ useHandCursor: true });
 
         container.on('pointerdown', () => {
-            this.tweens.add({ targets: container, scale: 0.95, duration: 50 });
-        });
-        container.on('pointerup', () => {
-            this.tweens.add({ targets: container, scale: 1.0, duration: 100 });
             SoundManager.playBackSE();
             SoundManager.triggerHaptic(8);
             this.cameras.main.fadeOut(300);
@@ -467,16 +459,13 @@ export default class StageSelectScene extends Phaser.Scene {
                 this.scene.start('MainMenuScene');
             });
         });
+
+        container.on('pointerover', () => {
+            this.tweens.add({ targets: container, scale: 1.1, duration: 100 });
+        });
         container.on('pointerout', () => {
             this.tweens.add({ targets: container, scale: 1.0, duration: 100 });
         });
-
-        const footerBg = this.add.graphics();
-        footerBg.setDepth(49);
-        footerBg.fillGradientStyle(0x1a1a2e, 0x1a1a2e, 0x1a1a2e, 0x1a1a2e, 0, 0, 1, 1);
-        footerBg.fillRect(0, GAME_H - 80, GAME_W, 15);
-        footerBg.fillStyle(0x1a1a2e, 1);
-        footerBg.fillRect(0, GAME_H - 65, GAME_W, 65);
     }
 
     selectStage(stageKey, type, stageData) {

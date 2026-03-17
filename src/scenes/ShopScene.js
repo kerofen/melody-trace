@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
-import { GAME_W, GAME_H, NOTE_COLORS, MENU_COLORS } from '../config.js';
+import { GAME_W, GAME_H, SAFE, NOTE_COLORS, MENU_COLORS } from '../config.js';
 import GameData from '../managers/GameData.js';
+import IAPManager from '../managers/IAPManager.js';
 import SoundManager from '../managers/SoundManager.js';
 
 export default class ShopScene extends Phaser.Scene {
@@ -12,6 +13,7 @@ export default class ShopScene extends Phaser.Scene {
         this.createBackground();
         this.createHeader();
         this.createAdFreeCard();
+        this.createRestoreButton();
         this.createBackButton();
         this.cameras.main.fadeIn(300);
     }
@@ -45,8 +47,8 @@ export default class ShopScene extends Phaser.Scene {
         const cardW = 320;
         const cardH = 260;
         const cardX = GAME_W / 2;
-        const cardY = GAME_H * 0.4;
-        const isPurchased = GameData.isPurchased('adFree');
+        const cardY = GAME_H * 0.38;
+        const isPurchased = IAPManager.isAdRemovalPurchased();
 
         const container = this.add.container(cardX, cardY);
 
@@ -153,9 +155,10 @@ export default class ShopScene extends Phaser.Scene {
         btnHighlight.fillRoundedRect(-btnW / 2 + 4, -btnH / 2 + 4, btnW - 8, btnH / 2 - 4, 10);
         btnContainer.add(btnHighlight);
 
-        const btnLabel = this.add.text(0, 0, '購入する', {
+        const price = IAPManager.getPrice();
+        const btnLabel = this.add.text(0, 0, `${price} で購入`, {
             fontFamily: 'KeiFont, sans-serif',
-            fontSize: '22px',
+            fontSize: '20px',
             color: '#333333',
             stroke: '#00000022',
             strokeThickness: 2,
@@ -171,8 +174,7 @@ export default class ShopScene extends Phaser.Scene {
             this.tweens.add({ targets: btnContainer, scale: 1.0, duration: 100 });
             SoundManager.playTapSE();
             SoundManager.triggerHaptic(10);
-            // 購入確認モーダルを表示
-            this.showPurchaseConfirmModal(btnContainer, btnLabel, container, cardH);
+            this.handlePurchase(btnContainer, btnLabel, container, cardH);
         });
         btnContainer.on('pointerout', () => {
             this.tweens.add({ targets: btnContainer, scale: 1.0, duration: 100 });
@@ -190,123 +192,72 @@ export default class ShopScene extends Phaser.Scene {
         container.add(btnContainer);
     }
 
-    /** 購入確認モーダル */
-    showPurchaseConfirmModal(btnContainer, btnLabel, cardContainer, cardH) {
-        const elements = [];
-
-        const overlay = this.add.graphics();
-        overlay.fillStyle(0x000000, 0.6);
-        overlay.fillRect(0, 0, GAME_W, GAME_H);
-        overlay.setDepth(200);
-        overlay.setInteractive(
-            new Phaser.Geom.Rectangle(0, 0, GAME_W, GAME_H),
-            Phaser.Geom.Rectangle.Contains
-        );
-        elements.push(overlay);
-
-        const panelW = 300;
-        const panelH = 180;
-        const panel = this.add.container(GAME_W / 2, GAME_H / 2);
-        panel.setDepth(201);
-        elements.push(panel);
-
-        const bg = this.add.graphics();
-        bg.fillStyle(0x1e2a4a, 1);
-        bg.fillRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 16);
-        bg.lineStyle(2, 0xffd93d, 0.5);
-        bg.strokeRoundedRect(-panelW / 2, -panelH / 2, panelW, panelH, 16);
-        panel.add(bg);
-
-        const confirmTitle = this.add.text(0, -panelH / 2 + 35, '購入の確認', {
-            fontFamily: 'KeiFont, sans-serif',
-            fontSize: '22px',
-            color: '#FFFFFF',
-            stroke: '#000000',
-            strokeThickness: 3,
-        }).setOrigin(0.5);
-        panel.add(confirmTitle);
-
-        const confirmDesc = this.add.text(0, -10, '広告削除を購入しますか？', {
-            fontFamily: 'KeiFont, sans-serif',
-            fontSize: '16px',
-            color: '#aaaaaa',
-        }).setOrigin(0.5);
-        panel.add(confirmDesc);
-
-        const closeModal = () => {
-            elements.forEach(el => { if (el && el.active) el.destroy(); });
-        };
-
-        // はいボタン
-        const yesBtn = this.add.container(60, panelH / 2 - 40);
-        const yesBg = this.add.graphics();
-        yesBg.fillStyle(MENU_COLORS.gold, 1);
-        yesBg.fillRoundedRect(-55, -18, 110, 36, 10);
-        yesBtn.add(yesBg);
-        const yesLabel = this.add.text(0, 0, '購入する', {
-            fontFamily: 'KeiFont, sans-serif', fontSize: '16px', color: '#333',
-        }).setOrigin(0.5);
-        yesBtn.add(yesLabel);
-        yesBtn.setSize(110, 36).setInteractive({ useHandCursor: true });
-        yesBtn.on('pointerup', () => {
-            SoundManager.playSuccessSE();
-            SoundManager.triggerHaptic(15);
-            closeModal();
-            this.handlePurchase(btnContainer, btnLabel, cardContainer, cardH);
-        });
-        panel.add(yesBtn);
-
-        // いいえボタン
-        const noBtn = this.add.container(-60, panelH / 2 - 40);
-        const noBg = this.add.graphics();
-        noBg.fillStyle(0x555555, 1);
-        noBg.fillRoundedRect(-55, -18, 110, 36, 10);
-        noBtn.add(noBg);
-        const noLabel = this.add.text(0, 0, 'キャンセル', {
-            fontFamily: 'KeiFont, sans-serif', fontSize: '14px', color: '#aaa',
-        }).setOrigin(0.5);
-        noBtn.add(noLabel);
-        noBtn.setSize(110, 36).setInteractive({ useHandCursor: true });
-        noBtn.on('pointerup', () => {
-            SoundManager.playBackSE();
-            closeModal();
-        });
-        panel.add(noBtn);
-
-        // オーバーレイクリックでキャンセル
-        overlay.on('pointerup', () => {
-            SoundManager.playBackSE();
-            closeModal();
-        });
-
-        panel.setScale(0.8);
-        panel.setAlpha(0);
-        this.tweens.add({
-            targets: panel,
-            scale: 1,
-            alpha: 1,
-            duration: 200,
-            ease: 'Back.easeOut',
-        });
-    }
-
-    handlePurchase(btnContainer, btnLabel, cardContainer, cardH) {
-        GameData.setPurchased('adFree');
-
+    async handlePurchase(btnContainer, btnLabel, cardContainer, cardH) {
         btnContainer.removeInteractive();
         this.tweens.killTweensOf(btnContainer);
+        btnLabel.setText('処理中...');
 
-        this.tweens.add({
-            targets: btnContainer,
-            alpha: 0,
-            duration: 200,
-            onComplete: () => {
-                btnContainer.destroy();
-                this.createPurchasedBadge(cardContainer, cardH);
-            },
+        const success = await IAPManager.purchase();
+
+        if (success) {
+            this.tweens.add({
+                targets: btnContainer,
+                alpha: 0,
+                duration: 200,
+                onComplete: () => {
+                    btnContainer.destroy();
+                    this.createPurchasedBadge(cardContainer, cardH);
+                },
+            });
+            this.showPurchaseEffect();
+        } else {
+            const price = IAPManager.getPrice();
+            btnLabel.setText(`${price} で購入`);
+            btnContainer.setInteractive({ useHandCursor: true });
+            this.tweens.add({
+                targets: btnContainer,
+                scale: 1.03,
+                duration: 800,
+                ease: 'Sine.easeInOut',
+                yoyo: true,
+                repeat: -1,
+            });
+        }
+    }
+
+    createRestoreButton() {
+        const y = GAME_H * 0.68;
+        const restoreText = this.add.text(GAME_W / 2, y, '購入を復元', {
+            fontFamily: 'KeiFont, sans-serif',
+            fontSize: '16px',
+            color: '#888888',
+        }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+        restoreText.on('pointerdown', () => {
+            restoreText.setColor('#aaaaaa');
         });
+        restoreText.on('pointerup', async () => {
+            restoreText.setColor('#888888');
+            SoundManager.playTapSE();
+            restoreText.setText('復元中...');
 
-        this.showPurchaseEffect();
+            const restored = await IAPManager.restorePurchases();
+
+            if (restored) {
+                restoreText.setText('復元しました！');
+                restoreText.setColor('#4db866');
+                this.time.delayedCall(1000, () => {
+                    this.scene.restart();
+                });
+            } else {
+                restoreText.setText('復元する購入がありません');
+                restoreText.setColor('#ff5252');
+                this.time.delayedCall(2000, () => {
+                    restoreText.setText('購入を復元');
+                    restoreText.setColor('#888888');
+                });
+            }
+        });
     }
 
     showPurchaseEffect() {
@@ -366,40 +317,36 @@ export default class ShopScene extends Phaser.Scene {
     }
 
     createBackButton() {
-        // ボタン位置を他シーンと統一（45px from bottom）
-        const y = GAME_H - 45;
-        const buttonW = 140;
-        const buttonH = 42;
+        const btnY = SAFE.TOP + 30;
 
-        const container = this.add.container(GAME_W / 2, y);
+        const container = this.add.container(30, btnY);
+        container.setDepth(20);
 
         const bg = this.add.graphics();
-        bg.fillStyle(MENU_COLORS.back, 1);
-        bg.fillRoundedRect(-buttonW / 2, -buttonH / 2, buttonW, buttonH, 12);
+        bg.fillStyle(0x000000, 0.3);
+        bg.fillRoundedRect(-18, -18, 36, 36, 10);
         container.add(bg);
 
-        const label = this.add.text(0, 0, '← もどる', {
+        const arrow = this.add.text(0, 0, '←', {
             fontFamily: 'KeiFont, sans-serif',
-            fontSize: '18px',
-            color: '#FFFFFF',
-            stroke: '#00000055',
-            strokeThickness: 3,
+            fontSize: '22px',
+            color: '#ffffff',
         }).setOrigin(0.5);
-        container.add(label);
+        container.add(arrow);
 
-        container.setSize(buttonW, buttonH).setInteractive({ useHandCursor: true });
+        container.setSize(36, 36).setInteractive({ useHandCursor: true });
 
         container.on('pointerdown', () => {
-            this.tweens.add({ targets: container, scale: 0.95, duration: 50 });
-        });
-        container.on('pointerup', () => {
-            this.tweens.add({ targets: container, scale: 1.0, duration: 100 });
             SoundManager.playBackSE();
             SoundManager.triggerHaptic(8);
             this.cameras.main.fadeOut(300);
             this.time.delayedCall(300, () => {
                 this.scene.start('MainMenuScene');
             });
+        });
+
+        container.on('pointerover', () => {
+            this.tweens.add({ targets: container, scale: 1.1, duration: 100 });
         });
         container.on('pointerout', () => {
             this.tweens.add({ targets: container, scale: 1.0, duration: 100 });

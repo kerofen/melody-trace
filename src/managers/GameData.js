@@ -177,4 +177,12 @@ export default class GameData {
         data.customStages = data.customStages.filter(s => s.id !== id);
         this.save(data);
     }
+
+    static resetAll() {
+        try {
+            localStorage.removeItem(this.STORAGE_KEY);
+        } catch (e) {
+            console.warn('GameData reset failed:', e);
+        }
+    }
 }

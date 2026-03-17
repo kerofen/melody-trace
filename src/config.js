@@ -324,6 +324,9 @@ export const TEXT_STYLE = {
     },
 };
 
+// プライバシーポリシーURL
+export const PRIVACY_POLICY_URL = 'https://kerofen.github.io/melody-trace/privacy-policy.html';
+
 // メニューボタンカラー
 export const MENU_COLORS = {
     stageSelect: 0x4d96ff,

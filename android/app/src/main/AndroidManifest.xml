@@ -35,13 +35,13 @@
                 android:resource="@xml/file_paths"></meta-data>
         </provider>
 
-        <!-- AdMob App ID (TODO: Replace with your real AdMob App ID) -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713"/>
+            android:value="ca-app-pub-3040113142694955~8586178087"/>
     </application>
 
     <!-- Permissions -->
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="com.android.vending.BILLING" />
 </manifest>

@@ -13,16 +13,19 @@
     "build:ios": "vite build && npx cap sync ios"
   },
   "dependencies": {
-    "@capacitor-community/admob": "^6.2.0",
-    "@capacitor/android": "^6.2.1",
-    "@capacitor/core": "^6.2.1",
-    "@capacitor/haptics": "^6.0.3",
-    "@capacitor/splash-screen": "^6.0.4",
-    "@capacitor/status-bar": "^6.0.3",
+    "@capacitor-community/admob": "^7.2.0",
+    "@capacitor-community/firebase-analytics": "^7.0.1",
+    "@capacitor/android": "^7.4.0",
+    "@capacitor/core": "^7.4.0",
+    "@capacitor/haptics": "^7.0.0",
+    "@capacitor/ios": "^7.4.0",
+    "@capacitor/splash-screen": "^7.0.0",
+    "@capacitor/status-bar": "^7.0.0",
+    "cordova-plugin-purchase": "^13.12.1",
     "phaser": "^3.80.1"
   },
   "devDependencies": {
-    "@capacitor/cli": "^6.2.1",
+    "@capacitor/cli": "^7.4.0",
     "typescript": "^5.9.3",
     "vite": "^5.4.0"
   }

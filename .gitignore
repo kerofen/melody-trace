@@ -19,6 +19,16 @@ dist/
 .DS_Store
 Thumbs.db
 
+# Signing keys
+*.keystore
+*.jks
+keystore.properties
+android/app/keystore/
+
+# Firebase / Google Services
+android/app/google-services.json
+ios/App/App/GoogleService-Info.plist
+
 # Capacitor platform build artifacts
 android/app/build/
 android/.gradle/
